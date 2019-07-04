@@ -1,6 +1,7 @@
 {   
     "new":{
-        "1":{
+        "id": 2,
+        "1" :{
             "value":["se puede matar por gusto", 
                     "los niños pueden trabajar minimo 26 horas al dia"]
         },
@@ -8,6 +9,7 @@
         "3":{"value":[]}
     },
     "old":{
+        "id": 1,
         "1":{
             "value":["no se puede matar por gusto", 
                     "los niños no pueden trabajar minimo 26 horas al dia"]

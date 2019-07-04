@@ -1,16 +1,17 @@
 import json
 
-def get_new_articles(json_file)->dict:
+def get_new_law(json_file)->dict:
     fd = open(json_file,"r")
-    articles = json.load(fd)["new"]
+    law = json.load(fd)["new"]
     fd.close()
-    return articles
+    return law
 
 def get_paragraphs(article)->list:
     return article["value"]
 
-def get_old_articles(json_file)->dict:
+def get_old_law(json_file)->dict:
     fd = open(json_file,"r")
-    articles = json.load(fd)["old"]
+    law = json.load(fd)["old"]
     fd.close()
-    return articles
+    return law
+
