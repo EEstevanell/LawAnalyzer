@@ -1,20 +1,14 @@
 {   
     "new":{
         "id": 2,
-        "1" :{
-            "value":["se puede matar por gusto", 
-                    "los niños pueden trabajar minimo 26 horas al dia"]
-        },
-        "2":{"value":[]},
-        "3":{"value":[]}
+        "1" : ["se puede matar por gusto",
+               "los niños pueden trabajar minimo 26 horas al dia"],
+        "2": ["aiooooooo esto se puso bueno madre mia"]
     },
     "old":{
         "id": 1,
-        "1":{
-            "value":["no se puede matar por gusto", 
-                    "los niños no pueden trabajar minimo 26 horas al dia"]
-        },
-        "2":{"value":[]},
-        "3":{"value":[]}
+        "1":["no se puede matar por gusto","los niños no pueden trabajar minimo 26 horas al dia"],
+        "2":[],
+        "3":[]
     }
 }
