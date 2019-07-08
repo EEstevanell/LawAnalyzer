@@ -1,7 +1,7 @@
 import json
 
 def get_new_law(json_file)->dict:
-    fd = open(json_file,"r")
+    fd = open(json_file, "r")
     law = json.load(fd)["new"]
     fd.close()
     return law
