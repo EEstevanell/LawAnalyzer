@@ -7,6 +7,25 @@ class LawAnalyzer():
         self.new_law = dm.get_new_law(laws_json)
         self.old_law = dm.get_old_law(laws_json)
         self.stoplist = set('for a of the and to in'.split())
+        self._pindex_to_articles = []
+        self._pindex_to_law = []
+        self._pindex_to_paragraph = []
+
+    def _save_pinfo(self, line, law_id, article_id, pindex):
+        self._pindex_to_articles.append(article_id)
+        self._pindex_to_law.append(law_id)
+        self._pindex_to_paragraph.append(pindex[0])
+        pindex[0] += 1
+        return line.split(',')[:-1]
+
+    def get_law_by_index(self, index):
+        return self._pindex_to_law[index]
+        
+    def get_article_by_index(self, index):
+        return self._pindex_to_articles[index]
+
+    def get_paragraph_by_index(self, index):
+        return self._pindex_to_paragraph[index]
 
     def save_law(self, law):
         l_id = law['id']
@@ -42,7 +61,8 @@ class LawAnalyzer():
             directory = st.get_law_directory(l_id)
             for article in self.get_articles(l_id):
                 with open(f"{directory}/{article}") as article_fd:
-                    docs += [line.split(',')[:-1] for line in article_fd.readlines()]
+                    i = [0]
+                    docs += [self._save_pinfo(line, l_id, article, i) for line in article_fd.readlines()]
 
         dictionary = gs.corpora.Dictionary(docs)
         return dictionary, docs
@@ -67,7 +87,6 @@ class LawAnalyzer():
         
         return paragraphs
 
-
     def get_all_laws(self):
         index = open(st.law_index_file)
         laws_id = []
@@ -87,13 +106,12 @@ class LawAnalyzer():
         # lsi.save(f'{st.law_lsi_file}')
         return lsi, corpus, d
 
-
     def get_similarities(self, article):
         paragraphs = self.get_paragraphs(article)
         sims = []
 
         lsi, corpus, dic = self.transform_to_lsi()
-        
+
         for p in paragraphs:
             vec_bow = dic.doc2bow(p)
             vec_lsi = lsi[vec_bow]
@@ -102,17 +120,14 @@ class LawAnalyzer():
 
         return sims # perform a similarity query against the corpus
 
-
     def query(self, article):
         sims = self.get_similarities(article)
 
-
-
-if __name__ == '__main__':
-    la = LawAnalyzer(r"src/test/testing_law_1.json")
-    la.save_law(la.new_law)
-    la.save_law(la.old_law)
-    d = la.load_corpus()
-    la.transform_to_lsi()
-    similarities = la.get_similarities('1')
-    print(similarities)
+# if __name__ == '__main__':
+la = LawAnalyzer(r"src/test/testing_law_1.json")
+la.save_law(la.new_law)
+la.save_law(la.old_law)
+d = la.load_corpus()
+la.transform_to_lsi()
+similarities = la.get_similarities('1')
+print(similarities)
