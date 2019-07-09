@@ -55,14 +55,16 @@ class LawAnalyzer():
                             print(file = fd)
 
     def load_corpus(self):
+        ignore_law_id = self.new_law["id"]
         laws = self.get_all_laws()
         docs = []
         for l_id in laws:
-            directory = st.get_law_directory(l_id)
-            for article in self.get_articles(l_id):
-                with open(f"{directory}/{article}") as article_fd:
-                    i = [0]
-                    docs += [self._save_pinfo(line, l_id, article, i) for line in article_fd.readlines()]
+            if l_id != str(ignore_law_id):
+                directory = st.get_law_directory(l_id)
+                for article in self.get_articles(l_id):
+                    with open(f"{directory}/{article}") as article_fd:
+                        i = [0]
+                        docs += [self._save_pinfo(line, l_id, article, i) for line in article_fd.readlines()]
 
         dictionary = gs.corpora.Dictionary(docs)
         return dictionary, docs
@@ -111,11 +113,11 @@ class LawAnalyzer():
         sims = []
 
         lsi, corpus, dic = self.transform_to_lsi()
+        index = gs.similarities.MatrixSimilarity(lsi[corpus])  # transform corpus to LSI space and index it
 
         for p in paragraphs:
             vec_bow = dic.doc2bow(p)
             vec_lsi = lsi[vec_bow]
-            index = gs.similarities.MatrixSimilarity(lsi[corpus])  # transform corpus to LSI space and index it
             sims.append(list(enumerate(index[vec_lsi]))) 
 
         return sims # perform a similarity query against the corpus
@@ -123,11 +125,45 @@ class LawAnalyzer():
     def query(self, article):
         sims = self.get_similarities(article)
 
-# if __name__ == '__main__':
-la = LawAnalyzer(r"src/test/testing_law_1.json")
-la.save_law(la.new_law)
-la.save_law(la.old_law)
-d = la.load_corpus()
-la.transform_to_lsi()
-similarities = la.get_similarities('1')
-print(similarities)
+    def get_best_rel(self, sims):
+        if not sims:
+            raise Exception("Corpus must be loaded first")
+
+        results = []
+        old_law_id = str(self.old_law["id"])
+
+        for docs in sims:
+            # index = max(docs, key = lambda x: x[-1])[0]
+            for sim in docs:
+                if self.get_law_by_index(sim[0]) == old_law_id:
+                    results.append((self.get_law_by_index(sim[0]),
+                                    self.get_article_by_index(sim[0]),
+                                    self.get_paragraph_by_index(sim[0]),
+                                    sim[1]))
+        return results
+    
+    def _get_best_rel(self, sims):
+        if not sims:
+            raise Exception("Corpus must be loaded first")
+
+        results = []
+        old_law_id = str(self.old_law["id"])
+
+        for docs in sims:
+            sim = max(docs, key = lambda x: x[-1] if self.get_law_by_index(x[0]) == old_law_id else -0.9e18)
+            results.append((self.get_law_by_index(sim[0]),
+                            self.get_article_by_index(sim[0]),
+                            self.get_paragraph_by_index(sim[0]),
+                            sim[1]))
+        return results
+
+if __name__ == '__main__':
+    la = LawAnalyzer(r"src/test/testing_law_1.json")
+    la.save_law(la.new_law)
+    la.save_law(la.old_law)
+    d = la.load_corpus()
+    la.transform_to_lsi()
+    similarities = la.get_similarities('1')
+    print(similarities)
+    print(f"results: {la.get_best_rel(similarities)}")
+    print(f"results (only best): {la.get_best_rel(similarities)}")
