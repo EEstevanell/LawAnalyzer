@@ -1,6 +1,7 @@
 import gensim as gs
 import data_manager as dm
 import settings as st
+import sys
 
 class LawAnalyzer():
     def __init__(self, laws_json):
@@ -20,7 +21,7 @@ class LawAnalyzer():
 
     def get_law_by_index(self, index):
         return self._pindex_to_law[index]
-        
+
     def get_article_by_index(self, index):
         return self._pindex_to_articles[index]
 
@@ -31,28 +32,29 @@ class LawAnalyzer():
         l_id = law['id']
         directory = st.get_law_directory(l_id)
 
-        #if law already was saved then don't append in index table
+        # if law already was saved then don't append in index table
         laws = self.get_all_laws()
         if not str(l_id) in laws:
-            #save law id in the laws index table
-            with open(f"{st.law_index_file}",'a') as index_file:
-                print(l_id, file = index_file)
+            # save law id in the laws index table
+            with open(f"{st.law_index_file}", 'a') as index_file:
+                print(l_id, file=index_file)
 
         with open(st.get_law_index_file(l_id), 'w') as index_file:
             for key in law.keys():
                 if key != "id":
-                    #save article address in the law's index table
-                    print(key, file = index_file)
+                    # save article address in the law's index table
+                    print(key, file=index_file)
 
-                    #save article info
+                    # save article info
                     article = law[key]
-                    with open(f"{directory}/{key}","w") as fd:
+                    with open(f"{directory}/{key}", "w") as fd:
                         # TODO use a tokenizer that removes punctuation marks
-                        texts = [[word for word in document.lower().split() if word not in self.stoplist] for document in article]
+                        texts = [[word for word in document.lower().split(
+                        ) if word not in self.stoplist] for document in article]
                         for paragraph in texts:
                             for word in paragraph:
-                                print(word, file = fd, end = ",")
-                            print(file = fd)
+                                print(word, file=fd, end=",")
+                            print(file=fd)
 
     def load_corpus(self):
         ignore_law_id = self.new_law["id"]
@@ -64,7 +66,8 @@ class LawAnalyzer():
                 for article in self.get_articles(l_id):
                     with open(f"{directory}/{article}") as article_fd:
                         i = [0]
-                        docs += [self._save_pinfo(line, l_id, article, i) for line in article_fd.readlines()]
+                        docs += [self._save_pinfo(line, l_id, article, i)
+                                 for line in article_fd.readlines()]
 
         dictionary = gs.corpora.Dictionary(docs)
         return dictionary, docs
@@ -86,7 +89,7 @@ class LawAnalyzer():
         paragraphs = []
         with open(f'{directory}/{article}') as fd:
             paragraphs += [line.split(',')[:-1] for line in fd.readlines()]
-        
+
         return paragraphs
 
     def get_all_laws(self):
@@ -104,7 +107,8 @@ class LawAnalyzer():
         d, texts = self.load_corpus()
         corpus = [d.doc2bow(text, allow_update=True) for text in texts]
         # TODO: See number of topics
-        lsi = gs.models.LsiModel(corpus, id2word=d, num_topics=2) # initialize an LSI transformation
+        # initialize an LSI transformation
+        lsi = gs.models.LsiModel(corpus, id2word=d, num_topics=200)
         # lsi.save(f'{st.law_lsi_file}')
         return lsi, corpus, d
 
@@ -113,17 +117,19 @@ class LawAnalyzer():
         sims = []
 
         lsi, corpus, dic = self.transform_to_lsi()
-        index = gs.similarities.MatrixSimilarity(lsi[corpus])  # transform corpus to LSI space and index it
+        # transform corpus to LSI space and index it
+        index = gs.similarities.MatrixSimilarity(lsi[corpus])
 
         for p in paragraphs:
             vec_bow = dic.doc2bow(p)
             vec_lsi = lsi[vec_bow]
-            sims.append(list(enumerate(index[vec_lsi]))) 
+            sims.append(list(enumerate(index[vec_lsi])))
 
-        return sims # perform a similarity query against the corpus
+        return sims  # perform a similarity query against the corpus
 
     def query(self, article):
         sims = self.get_similarities(article)
+        return self._get_best_rel(sims)
 
     def get_best_rel(self, sims):
         if not sims:
@@ -141,7 +147,7 @@ class LawAnalyzer():
                                     self.get_paragraph_by_index(sim[0]),
                                     sim[1]))
         return results
-    
+
     def _get_best_rel(self, sims):
         if not sims:
             raise Exception("Corpus must be loaded first")
@@ -150,20 +156,22 @@ class LawAnalyzer():
         old_law_id = str(self.old_law["id"])
 
         for docs in sims:
-            sim = max(docs, key = lambda x: x[-1] if self.get_law_by_index(x[0]) == old_law_id else -0.9e18)
+            sim = max(
+                docs, key=lambda x: x[-1] if self.get_law_by_index(x[0]) == old_law_id else -0.9e18)
             results.append((self.get_law_by_index(sim[0]),
                             self.get_article_by_index(sim[0]),
                             self.get_paragraph_by_index(sim[0]),
                             sim[1]))
         return results
 
+
 if __name__ == '__main__':
-    la = LawAnalyzer(r"src/test/testing_law_1.json")
+    la = LawAnalyzer(r"src/test/testing_law_2.json")
     la.save_law(la.new_law)
     la.save_law(la.old_law)
     d = la.load_corpus()
     la.transform_to_lsi()
-    similarities = la.get_similarities('1')
-    print(similarities)
-    print(f"results: {la.get_best_rel(similarities)}")
-    print(f"results (only best): {la.get_best_rel(similarities)}")
+    similarities = la.get_similarities('67')
+    # print(similarities)
+    # print(f"results: {la._get_best_rel(similarities)}")
+    # print(f"results (only best): {la._get_best_rel(similarities)}")

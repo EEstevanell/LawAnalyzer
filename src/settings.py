@@ -1,8 +1,8 @@
 import os
 
 corpus_directory = "src/corpora/"
-law_index_file = f"{corpus_directory}/index.law"
-law_lsi_file = f"{corpus_directory}/model.lsi"
+law_index_file = f"{corpus_directory}index.law"
+law_lsi_file = f"{corpus_directory}model.lsi"
 
 def get_law_index_file(law_id):
     return f"{get_law_directory(law_id)}/index.arts"
