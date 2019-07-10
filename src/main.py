@@ -103,29 +103,34 @@ class LawAnalyzer():
         index.close()
         return laws_id
 
-    def transform_to_lsi(self):
+    def save_model(self):
         d, texts = self.load_corpus()
         corpus = [d.doc2bow(text, allow_update=True) for text in texts]
         # TODO: See number of topics
         # initialize an LSI transformation
         lsi = gs.models.LsiModel(corpus, id2word=d, num_topics=200)
-        # lsi.save(f'{st.law_lsi_file}')
-        return lsi, corpus, d
+        lsi.save(st.model_lsi)
+        gs.corpora.MmCorpus.serialize(st.model_corpus, corpus)
+        d.save(st.model_dic)
 
     def get_similarities(self, article):
         paragraphs = self.get_paragraphs(article)
         sims = []
 
-        lsi, corpus, dic = self.transform_to_lsi()
+        lsi = gs.models.LsiModel.load(st.model_lsi)
+        dic = gs.corpora.Dictionary.load(st.model_dic)
+        corpus = gs.corpora.MmCorpus(st.model_corpus)
+
         # transform corpus to LSI space and index it
-        index = gs.similarities.MatrixSimilarity(lsi[corpus])
+        index = gs.similarities.MatrixSimilarity(lsi[corpus], num_features=len(dic))
 
         for p in paragraphs:
             vec_bow = dic.doc2bow(p)
             vec_lsi = lsi[vec_bow]
+            # perform a similarity query against the corpus
             sims.append(list(enumerate(index[vec_lsi])))
 
-        return sims  # perform a similarity query against the corpus
+        return sims  
 
     def query(self, article):
         sims = self.get_similarities(article)
@@ -166,12 +171,12 @@ class LawAnalyzer():
 
 
 if __name__ == '__main__':
-    la = LawAnalyzer(r"src/test/testing_law_2.json")
+    la = LawAnalyzer(r"src/test/data/testing_law_2.json")
     la.save_law(la.new_law)
     la.save_law(la.old_law)
     d = la.load_corpus()
-    la.transform_to_lsi()
+    la.save_model()
     similarities = la.get_similarities('67')
-    # print(similarities)
-    # print(f"results: {la._get_best_rel(similarities)}")
-    # print(f"results (only best): {la._get_best_rel(similarities)}")
+    print(similarities)
+    print(f"results: {la._get_best_rel(similarities)}")
+    print(f"results (only best): {la._get_best_rel(similarities)}")

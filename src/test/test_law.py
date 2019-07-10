@@ -19,11 +19,11 @@ LawAnalyzer = main.LawAnalyzer
 
 
 def test_law():
-    la = LawAnalyzer(r"src/test/testing_law_2.json")
+    la = LawAnalyzer(r"src/test/data/testing_law_2.json")
     d = la.load_corpus()
-    with open(r"src/test/relations.json") as fd:
+    with open(r"src/test/data/relations.json") as fd:
         rel = json.load(fd)
     for k, v in rel.items():
         results = la.query(k)
         arts = set(x[1] for x in results)
-        pytest.assume(arts == set(v), f'correct: {v}, answer: {arts}')
+        pytest.assume(arts == set(v), f'Correct: {v}, Answer: {arts}')
