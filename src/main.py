@@ -3,13 +3,15 @@ import data_manager as dm
 import settings as st
 
 class LawAnalyzer():
-    def __init__(self, laws_json):
-        self.new_law = dm.get_new_law(laws_json)
-        self.old_law = dm.get_old_law(laws_json)
-        self.stoplist = set('for a of the and to in'.split())
+    def __init__(self):
         self._pindex_to_articles = []
         self._pindex_to_law = []
         self._pindex_to_paragraph = []
+
+    def build(self, laws_json):
+        self.stoplist = set('for a of the and to in'.split())
+        self.new_law = dm.get_new_law(laws_json)
+        self.old_law = dm.get_old_law(laws_json)
 
     def _save_pinfo(self, line, law_id, article_id, pindex):
         self._pindex_to_articles.append(article_id)
@@ -142,7 +144,7 @@ class LawAnalyzer():
                                     sim[1]))
         return results
     
-    def _get_best_rel(self, sims):
+    def _get_all_rel(self, sims):
         if not sims:
             raise Exception("Corpus must be loaded first")
 
@@ -158,12 +160,13 @@ class LawAnalyzer():
         return results
 
 if __name__ == '__main__':
-    la = LawAnalyzer(r"src/test/testing_law_1.json")
+    la = LawAnalyzer()
+    la.build(r"src/test/testing_law_1.json")
     la.save_law(la.new_law)
     la.save_law(la.old_law)
     d = la.load_corpus()
     la.transform_to_lsi()
     similarities = la.get_similarities('1')
     print(similarities)
-    print(f"results: {la.get_best_rel(similarities)}")
+    print(f"results: {la._get_all_rel(similarities)}")
     print(f"results (only best): {la.get_best_rel(similarities)}")
