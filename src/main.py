@@ -136,7 +136,7 @@ class LawAnalyzer():
 
     def query(self, article):
         sims = self.get_similarities(article)
-        return self._get_best_rel(sims)
+        return self._get_all_rel(sims)
 
     def get_best_rel(self, sims):
         if not sims:
