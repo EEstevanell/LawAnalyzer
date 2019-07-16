@@ -173,13 +173,17 @@ class LawAnalyzer():
 
 
 if __name__ == '__main__':
+    if len(sys.argv) < 3:
+        print("usage: python main.py <laws-json> <article>")
+        exit()
+
     la = LawAnalyzer()
-    la.build(r"src/test/testing_law_1.json")
+    la.build(sys.argv[1])
     la.save_law(la.new_law)
     la.save_law(la.old_law)
     d = la.load_corpus()
     la.save_model()
-    similarities = la.get_similarities('67')
+    similarities = la.get_similarities(sys.argv[2])
     print(similarities)
     print(f"results: {la._get_all_rel(similarities)}")
     print(f"results (only best): {la.get_best_rel(similarities)}")
